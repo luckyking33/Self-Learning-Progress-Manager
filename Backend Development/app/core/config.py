@@ -13,11 +13,11 @@ def _split_csv(value: str) -> list[str]:
 @dataclass(frozen=True)
 class Settings:
     app_name: str = os.getenv("APP_NAME", "STAR API")
-    app_version: str = os.getenv("APP_VERSION", "0.1.0")
+    app_version: str = os.getenv("APP_VERSION", "1.0")
     api_v1_prefix: str = os.getenv("API_V1_PREFIX", "/api/v1")
     database_url: str = os.getenv(
         "DATABASE_URL",
-        "postgresql+asyncpg://star_user:star_password@localhost:5432/star_db",
+        "postgresql+psycopg2://star_user:star_password@localhost:5432/star_db",
     )
     cors_origins: list[str] = field(
         default_factory=lambda: _split_csv(

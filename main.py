@@ -1,14 +1,26 @@
+import os
+os.environ["PYTHONUNBUFFERED"] = "1"
 from fastapi import FastAPI, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 from SQLconnet import SessionLocal, engine
-from models import Base, User, Course, Enrollment  # 这里修复了
+from models import Base, User, Course, Enrollment, Chapter, KnowledgePoint, KnowledgePointProgress, Resource
 from schemas import (
-    ApiEnvelope, CourseCardOut, CourseDetailOut, CourseProgressStateOut,
-    CurrentUserOut, EnrolledCourseCardOut, CourseProgressPatchIn
+    ApiEnvelope,
+    CourseCardOut,
+    CourseDetailOut,
+    CourseProgressStateOut,
+    CurrentUserOut,
+    EnrolledCourseCardOut,
+    CourseProgressPatchIn
 )
 
-# 自动创建数据库表
-Base.metadata.create_all(bind=engine)
+# 延迟初始化数据库表，只在首次使用时创建
+_db_initialized = False
+def init_db():
+    global _db_initialized
+    if not _db_initialized:
+        Base.metadata.create_all(bind=engine)
+        _db_initialized = True
 
 app = FastAPI(title="STAR 自学进度管理器 API", version="1.0")
 
@@ -27,6 +39,7 @@ def get_current_user_id():
 # ===================== 首页自动跳转到接口文档 =====================
 @app.get("/")
 def home():
+    init_db()  # 初始化数据库
     from fastapi.responses import RedirectResponse
     return RedirectResponse(url="/docs")
 

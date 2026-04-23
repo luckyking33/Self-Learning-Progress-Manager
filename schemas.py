@@ -26,7 +26,7 @@ class CourseCardOut(BaseModel):
     coverTone: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # 2.3 CourseDetail（包含章节/知识点/资源）
 class ResourceOut(BaseModel):
@@ -37,7 +37,7 @@ class ResourceOut(BaseModel):
     description: Optional[str]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class KnowledgePointOut(BaseModel):
     id: int
@@ -49,7 +49,7 @@ class KnowledgePointOut(BaseModel):
     keyActions: Optional[List[str]]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class ChapterOut(BaseModel):
     id: int
@@ -60,7 +60,7 @@ class ChapterOut(BaseModel):
     resources: List[ResourceOut]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class CourseDetailOut(BaseModel):
     id: int
@@ -83,7 +83,7 @@ class CourseDetailOut(BaseModel):
     chapters: List[ChapterOut]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # 2.4 CourseProgressState
 class CourseProgressStateOut(BaseModel):
@@ -94,7 +94,7 @@ class CourseProgressStateOut(BaseModel):
     joinedAt: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # 2.5 EnrolledCourseCard
 class EnrolledCourseCardOut(BaseModel):
@@ -112,7 +112,7 @@ class EnrolledCourseCardOut(BaseModel):
     lastLearningChapterTitle: Optional[str]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # 2.6 MockUser（当前用户信息）
 class CurrentUserOut(BaseModel):
@@ -124,7 +124,7 @@ class CurrentUserOut(BaseModel):
     enrolledCourseIds: List[int]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # 进度更新请求模型
 class CourseProgressPatchIn(BaseModel):
