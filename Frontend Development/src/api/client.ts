@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const client = axios.create({
-  baseURL: "/api/api",
+  baseURL: "/api/mock",
   timeout: 6000,
 });
 
