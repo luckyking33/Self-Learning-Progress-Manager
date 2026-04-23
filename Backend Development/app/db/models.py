@@ -1,4 +1,4 @@
-﻿"""SQLAlchemy models for the STAR learning community."""
+"""SQLAlchemy models for the STAR learning community."""
 
 from __future__ import annotations
 
@@ -19,6 +19,23 @@ class User(IDMixin, TimestampMixin, Base):
     username: Mapped[str] = mapped_column(String(50), nullable=False, unique=True, index=True)
     email: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    avatar: Mapped[str] = mapped_column(
+        String(16),
+        nullable=False,
+        default="ST",
+        server_default="ST",
+    )
+    headline: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        default="Learning with STAR",
+        server_default="Learning with STAR",
+    )
+    streak_days: Mapped[int] = mapped_column(
+        nullable=False,
+        default=0,
+        server_default=sa.text("0"),
+    )
     is_active: Mapped[bool] = mapped_column(
         sa.Boolean(),
         nullable=False,
@@ -49,7 +66,31 @@ class Course(IDMixin, TimestampMixin, Base):
         nullable=True,
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
+    subtitle: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        default="",
+        server_default="",
+    )
     description: Mapped[str | None] = mapped_column(Text(), nullable=True)
+    tags: Mapped[list[str]] = mapped_column(
+        JSONB,
+        nullable=False,
+        default=list,
+        server_default=sa.text("'[]'::jsonb"),
+    )
+    category: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+        default="CS自学",
+        server_default="CS自学",
+    )
+    cover_tone: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        default="from-sky-100 via-white to-cyan-50",
+        server_default="from-sky-100 via-white to-cyan-50",
+    )
     is_public: Mapped[bool] = mapped_column(
         sa.Boolean(),
         nullable=False,
@@ -188,6 +229,10 @@ class Enrollment(IDMixin, Base):
         ForeignKey("course_versions.id", ondelete="RESTRICT"),
         nullable=False,
     )
+    last_learning_knowledge_point_id: Mapped[int | None] = mapped_column(
+        ForeignKey("knowledge_points.id", ondelete="SET NULL"),
+        nullable=True,
+    )
     progress_percent: Mapped[Decimal] = mapped_column(
         Numeric(5, 2),
         nullable=False,
@@ -203,6 +248,9 @@ class Enrollment(IDMixin, Base):
     user: Mapped["User"] = relationship(back_populates="enrollments")
     course: Mapped["Course"] = relationship(back_populates="enrollments")
     course_version: Mapped["CourseVersion"] = relationship(back_populates="enrollments")
+    last_learning_knowledge_point: Mapped["KnowledgePoint | None"] = relationship(
+        foreign_keys=[last_learning_knowledge_point_id]
+    )
     knowledge_point_progress: Mapped[list["KnowledgePointProgress"]] = relationship(
         back_populates="enrollment",
         cascade="all, delete-orphan",

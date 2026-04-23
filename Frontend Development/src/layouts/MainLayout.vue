@@ -148,7 +148,7 @@ onMounted(async () => {
             class="hidden items-center gap-2 rounded-full border border-white/70 bg-white/60 px-4 py-2 text-sm text-slate-500 shadow-[0_12px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl md:flex"
           >
             <AppIcon name="sparkles" class="h-4 w-4" />
-            <span>Notion-like study workflow</span>
+            <span>STAR self-study workflow</span>
           </div>
         </header>
 

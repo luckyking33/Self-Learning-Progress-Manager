@@ -1,4 +1,4 @@
-﻿"""Async database engine and session factory."""
+"""Async database engine and session dependency helpers."""
 
 from __future__ import annotations
 
@@ -18,5 +18,6 @@ AsyncSessionLocal = async_sessionmaker(
 
 
 async def get_db_session() -> AsyncIterator[AsyncSession]:
+    """Yield one async SQLAlchemy session per request."""
     async with AsyncSessionLocal() as session:
         yield session
