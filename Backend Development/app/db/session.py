@@ -19,6 +19,5 @@ AsyncSessionLocal = async_sessionmaker(
 
 async def get_db_session() -> AsyncIterator[AsyncSession]:
     """Yield one async SQLAlchemy session per request."""
-
     async with AsyncSessionLocal() as session:
         yield session

@@ -13,7 +13,7 @@ def _split_csv(value: str) -> list[str]:
 @dataclass(frozen=True)
 class Settings:
     app_name: str = os.getenv("APP_NAME", "STAR API")
-    app_version: str = os.getenv("APP_VERSION", "1.0")
+    app_version: str = os.getenv("APP_VERSION", "0.1.0")
     api_v1_prefix: str = os.getenv("API_V1_PREFIX", "/api/v1")
     secret_key: str = os.getenv("SECRET_KEY", "star-dev-secret-key-change-me")
     jwt_algorithm: str = os.getenv("JWT_ALGORITHM", "HS256")
