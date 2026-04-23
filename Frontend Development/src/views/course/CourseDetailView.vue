@@ -28,10 +28,11 @@ const currentChapterResources = computed(() => selectedChapter.value?.resources 
 const enrolled = computed(() =>
   course.value ? userStore.isEnrolledInCourse(course.value.id) : false,
 );
+const canTrackProgress = computed(() => userStore.isAuthenticated && enrolled.value);
 
 function resolvedCourseId() {
   const value = Number(route.params.id);
-  return Number.isFinite(value) && value > 0 ? value : 101;
+  return Number.isFinite(value) && value > 0 ? value : 1;
 }
 
 function resolvedKnowledgePointId() {
@@ -120,6 +121,7 @@ watch(
                       </p>
                     </div>
                     <button
+                      v-if="canTrackProgress"
                       class="rounded-full bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:bg-slate-900 hover:text-white"
                       @click="markCurrentKnowledgePoint"
                     >
@@ -130,6 +132,13 @@ watch(
                       }}
                     </button>
                   </div>
+
+                  <p
+                    v-if="!canTrackProgress"
+                    class="mt-4 rounded-[20px] bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-500"
+                  >
+                    登录并加入学习后，你的知识点进度和上次学习位置会自动保存。
+                  </p>
 
                   <div class="mt-8 rounded-[28px] bg-slate-50/80 p-6">
                     <p class="text-sm leading-8 text-slate-600">
@@ -202,9 +211,9 @@ watch(
               >
                 <p class="text-xs uppercase tracking-[0.24em] text-slate-400">Page Notes</p>
                 <ul class="mt-4 space-y-3 text-sm leading-7 text-slate-500">
-                  <li>左侧章节树可折叠，适合在阅读模式和全局浏览模式之间切换。</li>
-                  <li>知识点是主要学习单元，进度条以知识点完成率计算。</li>
-                  <li>资源卡片聚焦当前章节，避免右侧内容区信息过载。</li>
+                  <li>左侧章节树支持折叠，适合在全局浏览与专注阅读之间切换。</li>
+                  <li>知识点是主要学习单元，整体进度按知识点完成率计算。</li>
+                  <li>资源卡片只聚焦当前章节，避免右侧内容区信息过载。</li>
                 </ul>
               </section>
             </div>

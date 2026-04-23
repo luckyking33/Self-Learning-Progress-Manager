@@ -1,88 +1,113 @@
-"""User management endpoints."""
+"""User profile and enrollment endpoints."""
+
+from __future__ import annotations
 
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from app.db.session import get_db
-from app.core.auth import get_current_user_id
-from models import User, Enrollment, Course, Chapter, KnowledgePoint, KnowledgePointProgress
-from schemas import ApiEnvelope, CurrentUserOut, EnrolledCourseCardOut
+from app.core.auth import get_current_active_user
+from app.db.models import Chapter, Course, Enrollment, User
+from app.db.session import get_db_session
+from app.schemas import ApiEnvelope, CurrentUserOut, EnrolledCourseCardOut
+
 
 router = APIRouter()
 
 
-@router.get("/me", response_model=ApiEnvelope[CurrentUserOut])
-def get_current_user(
-    db: Session = Depends(get_db),
-    user_id: int = Depends(get_current_user_id),
-):
-    """获取当前用户信息"""
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        from fastapi import HTTPException
-        raise HTTPException(status_code=401, detail="未登录")
-    
-    enrolled_course_ids = [en.course_id for en in db.query(Enrollment).filter(Enrollment.user_id == user_id).all()]
-    
-    return ApiEnvelope(
-        code=0,
-        message="ok",
-        data=CurrentUserOut(
-            id=user.id,
-            name=user.name,
-            avatar=user.avatar,
-            headline=user.headline,
-            streakDays=user.streak_days,
-            enrolledCourseIds=enrolled_course_ids
-        )
+def _resolve_last_learning_meta(enrollment: Enrollment) -> tuple[int, str, str]:
+    course = enrollment.course
+    if course is None:
+        return 0, "Start learning", "Overview"
+
+    fallback_chapter_title = course.chapters[0].title if course.chapters else "Overview"
+    fallback_point_title = (
+        course.chapters[0].knowledge_points[0].title
+        if course.chapters and course.chapters[0].knowledge_points
+        else "Start learning"
     )
+    last_id = enrollment.last_learning_knowledge_point_id or 0
+
+    if last_id == 0:
+        return 0, fallback_point_title, fallback_chapter_title
+
+    for chapter in course.chapters:
+        for point in chapter.knowledge_points:
+            if point.id == last_id:
+                return last_id, point.title, chapter.title
+
+    return last_id, fallback_point_title, fallback_chapter_title
+
+
+@router.get("/me", response_model=ApiEnvelope[CurrentUserOut])
+async def get_current_user_profile(
+    session: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(get_current_active_user),
+) -> ApiEnvelope[CurrentUserOut]:
+    enrolled_ids_result = await session.execute(
+        select(Enrollment.course_id)
+        .where(Enrollment.user_id == current_user.id)
+        .order_by(Enrollment.course_id)
+    )
+    enrolled_course_ids = list(enrolled_ids_result.scalars())
+
+    payload = CurrentUserOut(
+        id=current_user.id,
+        name=current_user.username,
+        avatar=current_user.avatar,
+        headline=current_user.headline,
+        streakDays=current_user.streak_days,
+        enrolledCourseIds=enrolled_course_ids,
+    )
+    return ApiEnvelope(code=0, message="ok", data=payload)
 
 
 @router.get("/me/enrollments", response_model=ApiEnvelope[list[EnrolledCourseCardOut]])
-def get_enrolled_courses(
-    db: Session = Depends(get_db),
-    user_id: int = Depends(get_current_user_id),
-):
-    """获取已报名课程"""
-    enrollments = db.query(Enrollment).filter(Enrollment.user_id == user_id).all()
-    result = []
-    
-    for e in enrollments:
-        c = db.query(Course).filter(Course.id == e.course_id).first()
-        if not c:
+async def get_enrolled_courses(
+    session: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(get_current_active_user),
+) -> ApiEnvelope[list[EnrolledCourseCardOut]]:
+    result = await session.execute(
+        select(Enrollment)
+        .where(Enrollment.user_id == current_user.id)
+        .options(
+            selectinload(Enrollment.course).selectinload(Course.author),
+            selectinload(Enrollment.course).selectinload(Course.chapters).selectinload(Chapter.knowledge_points),
+            selectinload(Enrollment.knowledge_point_progress),
+        )
+        .order_by(Enrollment.course_id)
+    )
+    enrollments = list(result.scalars().unique())
+
+    cards: list[EnrolledCourseCardOut] = []
+    for enrollment in enrollments:
+        course = enrollment.course
+        if course is None:
             continue
-        
-        done = db.query(KnowledgePointProgress).filter(
-            KnowledgePointProgress.enrollment_id == e.id,
-            KnowledgePointProgress.is_completed == True
-        ).count()
-        
-        total = c.knowledge_point_count or 0
-        pct = round(done / total * 100) if total else 0
-        
-        last_title = None
-        ch_title = None
-        if e.last_learning_knowledge_point_id:
-            kp = db.query(KnowledgePoint).filter(KnowledgePoint.id == e.last_learning_knowledge_point_id).first()
-            if kp:
-                last_title = kp.title
-                ch = db.query(Chapter).filter(Chapter.id == kp.chapter_id).first()
-                if ch:
-                    ch_title = ch.title
-        
-        result.append(EnrolledCourseCardOut(
-            id=c.id,
-            title=c.title,
-            subtitle=c.subtitle,
-            authorName=c.author_name,
-            authorAvatar=c.author_avatar,
-            coverTone=c.cover_tone,
-            completedKnowledgePointCount=done,
-            totalKnowledgePointCount=total,
-            progressPercent=pct,
-            lastLearningKnowledgePointId=e.last_learning_knowledge_point_id,
-            lastLearningKnowledgePointTitle=last_title,
-            lastLearningChapterTitle=ch_title
-        ))
-    
-    return ApiEnvelope(code=0, message="ok", data=result)
+
+        total_points = sum(len(chapter.knowledge_points) for chapter in course.chapters)
+        completed_count = sum(1 for item in enrollment.knowledge_point_progress if item.is_completed)
+        progress_percent = 0 if total_points == 0 else round((completed_count / total_points) * 100)
+        last_id, last_title, chapter_title = _resolve_last_learning_meta(enrollment)
+        author_name = course.author.username if course.author else "STAR Author"
+        author_avatar = course.author.avatar if course.author else "ST"
+
+        cards.append(
+            EnrolledCourseCardOut(
+                id=course.id,
+                title=course.title,
+                subtitle=course.subtitle,
+                authorName=author_name,
+                authorAvatar=author_avatar,
+                coverTone=course.cover_tone,
+                completedKnowledgePointCount=completed_count,
+                totalKnowledgePointCount=total_points,
+                progressPercent=progress_percent,
+                lastLearningKnowledgePointId=last_id,
+                lastLearningKnowledgePointTitle=last_title,
+                lastLearningChapterTitle=chapter_title,
+            )
+        )
+
+    return ApiEnvelope(code=0, message="ok", data=cards)

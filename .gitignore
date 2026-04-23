@@ -3,3 +3,4 @@ docker-compose.yml
 数据库ER.md
 __pycache__/
 *.pyc
+API接口需求文档(v1.0).md

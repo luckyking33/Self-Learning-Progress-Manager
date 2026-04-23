@@ -4,14 +4,13 @@ import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 
 import AppIcon from "@/components/icons/AppIcon.vue";
-import { courseCategories } from "@/mocks/data/course";
 import { useCourseStore } from "@/stores/course";
 import type { CourseCategory } from "@/types/course";
 
 const router = useRouter();
 const courseStore = useCourseStore();
 
-const { courseCatalog, isCatalogLoading } = storeToRefs(courseStore);
+const { availableCategories, courseCatalog, isCatalogLoading } = storeToRefs(courseStore);
 
 const keyword = ref("");
 const activeCategory = ref<CourseCategory | null>(null);
@@ -55,7 +54,7 @@ onMounted(async () => {
           <p class="text-[11px] uppercase tracking-[0.28em] text-slate-400">Course Square</p>
           <h1 class="mt-3 text-4xl font-semibold tracking-tight text-slate-950">课程广场</h1>
           <p class="mt-4 max-w-2xl text-sm leading-7 text-slate-500">
-            以 Gallery 视图浏览社区课程，找到适合自己的学习路径，再决定加入学习或 fork 成自己的版本。
+            以 Gallery 视图浏览社区课程，找到适合自己的学习路径，再决定加入学习或继续深挖。
           </p>
         </div>
         <div
@@ -81,7 +80,7 @@ onMounted(async () => {
 
         <div class="flex flex-wrap gap-2">
           <button
-            v-for="category in courseCategories"
+            v-for="category in availableCategories"
             :key="category"
             :class="[
               'rounded-full px-4 py-2 text-sm font-medium transition-all duration-300 ease-in-out',
@@ -97,10 +96,7 @@ onMounted(async () => {
       </div>
     </div>
 
-    <div
-      v-if="isCatalogLoading"
-      class="grid gap-5 md:grid-cols-2 xl:grid-cols-3"
-    >
+    <div v-if="isCatalogLoading" class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
       <div
         v-for="skeleton in 6"
         :key="skeleton"

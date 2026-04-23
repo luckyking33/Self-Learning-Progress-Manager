@@ -6,13 +6,7 @@ import type {
   CourseProgressState,
   CourseCategory,
   EnrolledCourseCard,
-  MockUser,
 } from "@/types/course";
-
-export async function fetchCurrentUser(): Promise<MockUser> {
-  const response = await client.get<ApiEnvelope<MockUser>>("/users/me");
-  return response.data.data;
-}
 
 export async function fetchCourseList(params?: {
   keyword?: string;

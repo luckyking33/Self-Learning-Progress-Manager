@@ -27,7 +27,7 @@ const emit = defineEmits<{
         joinState === 'loading' ? 'animate-spin' : '',
       ]"
     >
-      {{ joinState === "loading" ? "◌" : joinState === "success" ? "✓" : "★" }}
+      {{ joinState === "loading" ? "●" : joinState === "success" ? "✓" : "✦" }}
     </span>
     <span>
       {{

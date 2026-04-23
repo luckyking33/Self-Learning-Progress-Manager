@@ -6,8 +6,22 @@ from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.db.models import Chapter, Course, KnowledgePoint, Resource
+from app.db.models import Chapter, Course, CourseVersion, KnowledgePoint, Resource
 from app.schemas import CourseCreate
+
+
+def _public_course_list_query() -> Select[tuple[Course]]:
+    return (
+        select(Course)
+        .where(Course.is_public.is_(True))
+        .options(
+            selectinload(Course.author),
+            selectinload(Course.chapters).selectinload(Chapter.knowledge_points),
+            selectinload(Course.forks),
+            selectinload(Course.enrollments),
+        )
+        .order_by(Course.id)
+    )
 
 
 def _course_detail_query(course_id: int) -> Select[tuple[Course]]:
@@ -15,7 +29,10 @@ def _course_detail_query(course_id: int) -> Select[tuple[Course]]:
         select(Course)
         .where(Course.id == course_id)
         .options(
+            selectinload(Course.author),
             selectinload(Course.versions),
+            selectinload(Course.forks),
+            selectinload(Course.enrollments),
             selectinload(Course.chapters).selectinload(Chapter.knowledge_points),
             selectinload(Course.chapters).selectinload(Chapter.resources),
             selectinload(Course.forked_from),
@@ -23,10 +40,33 @@ def _course_detail_query(course_id: int) -> Select[tuple[Course]]:
     )
 
 
+async def list_public_courses(session: AsyncSession) -> list[Course]:
+    result = await session.execute(_public_course_list_query())
+    return list(result.scalars().unique())
+
+
 async def get_course(session: AsyncSession, course_id: int) -> Course | None:
-    """Load a course with versions, chapters, knowledge points, and resources."""
+    """Load a course with author, versions, chapters, knowledge points, and resources."""
 
     result = await session.execute(_course_detail_query(course_id))
+    return result.scalar_one_or_none()
+
+
+async def get_course_version_for_enrollment(
+    session: AsyncSession,
+    course: Course,
+) -> CourseVersion | None:
+    """Return the latest published version for enrollment binding."""
+
+    if course.versions:
+        return course.versions[-1]
+
+    result = await session.execute(
+        select(CourseVersion)
+        .where(CourseVersion.course_id == course.id)
+        .order_by(CourseVersion.published_at.desc(), CourseVersion.id.desc())
+        .limit(1)
+    )
     return result.scalar_one_or_none()
 
 
@@ -41,7 +81,11 @@ async def create_course(
     course = Course(
         author_id=author_id,
         title=payload.title,
+        subtitle=payload.subtitle,
         description=payload.description,
+        tags=payload.tags,
+        category=payload.category,
+        cover_tone=payload.cover_tone,
         is_public=payload.is_public,
     )
 

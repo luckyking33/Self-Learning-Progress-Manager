@@ -18,6 +18,19 @@ import type {
   KnowledgePoint,
 } from "@/types/course";
 
+function buildGuestProgress(course: CourseDetail): CourseProgressState {
+  const firstKnowledgePointId =
+    course.chapters.flatMap((chapter) => chapter.knowledgePoints)[0]?.id ?? 0;
+
+  return {
+    courseId: course.id,
+    selectedKnowledgePointId: firstKnowledgePointId,
+    lastLearningKnowledgePointId: firstKnowledgePointId,
+    completedKnowledgePointIds: [],
+    joinedAt: null,
+  };
+}
+
 function normalizeTargetKnowledgePointId(
   course: CourseDetail,
   progress: CourseProgressState,
@@ -103,40 +116,62 @@ export const useCourseStore = defineStore("course", {
   actions: {
     async loadCourseCatalog() {
       this.isCatalogLoading = true;
-      this.courseCatalog = await fetchCourseList();
-      this.isCatalogLoading = false;
-      return this.courseCatalog;
+      try {
+        this.courseCatalog = await fetchCourseList();
+        return this.courseCatalog;
+      } finally {
+        this.isCatalogLoading = false;
+      }
     },
-    async loadCourse(courseId = 101, preferredKnowledgePointId?: number | null) {
+    async loadCourse(courseId = 1, preferredKnowledgePointId?: number | null) {
       this.isLoading = true;
-      const [course, progress] = await Promise.all([
-        fetchCourseDetail(courseId),
-        fetchCourseProgress(courseId),
-      ]);
+      const userStore = useUserStore();
 
-      const selectedKnowledgePointId = normalizeTargetKnowledgePointId(
-        course,
-        progress,
-        preferredKnowledgePointId,
-      );
+      try {
+        const course = await fetchCourseDetail(courseId);
+        let progress = buildGuestProgress(course);
 
-      this.course = course;
-      this.progress = {
-        ...progress,
-        selectedKnowledgePointId,
-        lastLearningKnowledgePointId: selectedKnowledgePointId,
-      };
-      this.isLoading = false;
+        if (userStore.token) {
+          try {
+            progress = await fetchCourseProgress(courseId);
+          } catch (error) {
+            const status = (error as Error & { status?: number }).status;
+            if (status !== 404 && status !== 401) {
+              throw error;
+            }
+          }
+        }
 
-      if (preferredKnowledgePointId) {
-        await updateCourseProgress(courseId, {
+        const selectedKnowledgePointId = normalizeTargetKnowledgePointId(
+          course,
+          progress,
+          preferredKnowledgePointId,
+        );
+
+        this.course = course;
+        this.progress = {
+          ...progress,
           selectedKnowledgePointId,
           lastLearningKnowledgePointId: selectedKnowledgePointId,
-        });
+        };
+
+        if (preferredKnowledgePointId && userStore.isEnrolledInCourse(courseId)) {
+          await updateCourseProgress(courseId, {
+            selectedKnowledgePointId,
+            lastLearningKnowledgePointId: selectedKnowledgePointId,
+          });
+        }
+      } finally {
+        this.isLoading = false;
       }
     },
     async syncProgress() {
       if (!this.course || !this.progress) {
+        return;
+      }
+
+      const userStore = useUserStore();
+      if (!userStore.isEnrolledInCourse(this.course.id)) {
         return;
       }
 
@@ -149,7 +184,7 @@ export const useCourseStore = defineStore("course", {
       const selectedKnowledgePoint = this.selectedKnowledgePoint;
       const selectedChapter = this.selectedChapter;
       if (selectedKnowledgePoint && selectedChapter) {
-        useUserStore().patchEnrolledCourseProgress({
+        userStore.patchEnrolledCourseProgress({
           courseId: this.course.id,
           completedKnowledgePointCount: this.progress.completedKnowledgePointIds.length,
           totalKnowledgePointCount: this.course.knowledgePointCount,
@@ -169,7 +204,12 @@ export const useCourseStore = defineStore("course", {
       await this.syncProgress();
     },
     async toggleKnowledgePointCompleted(knowledgePointId: number) {
-      if (!this.progress) {
+      if (!this.progress || !this.course) {
+        return;
+      }
+
+      const userStore = useUserStore();
+      if (!userStore.isEnrolledInCourse(this.course.id)) {
         return;
       }
 
@@ -187,10 +227,25 @@ export const useCourseStore = defineStore("course", {
         return;
       }
 
+      const userStore = useUserStore();
+      if (!userStore.token) {
+        const redirect = encodeURIComponent(window.location.pathname + window.location.search);
+        window.location.assign(`/login?redirect=${redirect}`);
+        return;
+      }
+
+      if (userStore.isEnrolledInCourse(this.course.id)) {
+        this.joinState = "success";
+        window.setTimeout(() => {
+          this.joinState = "idle";
+        }, 1000);
+        return;
+      }
+
       this.joinState = "loading";
       const response = await joinCourse(this.course.id);
       this.progress.joinedAt = response.joinedAt;
-      await useUserStore().refreshEnrollmentState();
+      await userStore.refreshEnrollmentState();
       this.joinState = "success";
 
       window.setTimeout(() => {

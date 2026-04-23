@@ -61,15 +61,15 @@ defineProps<{
           <div class="mt-4 grid grid-cols-3 gap-3 text-center">
             <div class="rounded-2xl bg-white px-3 py-3">
               <p class="text-lg font-semibold text-slate-900">{{ course.chapterCount }}</p>
-              <p class="mt-1 text-[11px] uppercase tracking-[0.18em] text-slate-400">Chapters</p>
+              <p class="mt-1 text-[11px] uppercase tracking-[0.18em] text-slate-400">章节</p>
             </div>
             <div class="rounded-2xl bg-white px-3 py-3">
               <p class="text-lg font-semibold text-slate-900">{{ course.knowledgePointCount }}</p>
-              <p class="mt-1 text-[11px] uppercase tracking-[0.18em] text-slate-400">Nodes</p>
+              <p class="mt-1 text-[11px] uppercase tracking-[0.18em] text-slate-400">知识点</p>
             </div>
             <div class="rounded-2xl bg-white px-3 py-3">
               <p class="text-lg font-semibold text-slate-900">{{ course.estimatedHours }}h</p>
-              <p class="mt-1 text-[11px] uppercase tracking-[0.18em] text-slate-400">Effort</p>
+              <p class="mt-1 text-[11px] uppercase tracking-[0.18em] text-slate-400">预计投入</p>
             </div>
           </div>
         </div>
@@ -114,18 +114,18 @@ defineProps<{
         </div>
 
         <div class="rounded-[28px] bg-slate-900 px-5 py-5 text-white">
-          <p class="text-xs uppercase tracking-[0.24em] text-white/50">Current Learner</p>
+          <p class="text-xs uppercase tracking-[0.24em] text-white/50">Course Context</p>
           <div class="mt-4 flex items-center gap-3">
             <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-sm font-semibold">
               {{ course.authorAvatar }}
             </div>
             <div>
               <p class="font-semibold">课程由 {{ course.authorName }} 维护</p>
-              <p class="text-sm text-white/60">学习者绑定稳定版本，内容更新不会打断当前进度。</p>
+              <p class="text-sm text-white/60">登录后可保存报名状态、上次学习位置与知识点进度。</p>
             </div>
           </div>
           <p class="mt-5 text-sm leading-7 text-white/70">
-            左侧章节树用于快速跳转，右侧内容区优先展示当前知识点，保证阅读和操作始终聚焦在一个核心单元上。
+            左侧章节树用于快速跳转，右侧内容区聚焦当前知识点。这样既保留课程全景，又不会把一次学习拆得过碎。
           </p>
         </div>
       </div>
