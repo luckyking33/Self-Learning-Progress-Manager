@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, watch } from "vue";
 import { storeToRefs } from "pinia";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 
 import ChapterTree from "@/components/course/ChapterTree.vue";
 import JoinActionFab from "@/components/course/JoinActionFab.vue";
@@ -10,6 +10,7 @@ import { useCourseStore } from "@/stores/course";
 import { useUserStore } from "@/stores/user";
 
 const route = useRoute();
+const router = useRouter();
 const courseStore = useCourseStore();
 const userStore = useUserStore();
 
@@ -66,6 +67,20 @@ async function markCurrentKnowledgePoint() {
   }
 }
 
+async function createCourseNote() {
+  if (!course.value) {
+    return;
+  }
+
+  await router.push({
+    path: "/notes",
+    query: {
+      mode: "new",
+      courseId: String(course.value.id),
+    },
+  });
+}
+
 watch(
   () => [route.params.id, route.query.kp],
   async () => {
@@ -120,17 +135,25 @@ watch(
                         {{ selectedKnowledgePoint.summary }}
                       </p>
                     </div>
-                    <button
-                      v-if="canTrackProgress"
-                      class="rounded-full bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:bg-slate-900 hover:text-white"
-                      @click="markCurrentKnowledgePoint"
-                    >
-                      {{
-                        progress?.completedKnowledgePointIds.includes(selectedKnowledgePoint.id)
-                          ? "标记为未完成"
-                          : "标记为已完成"
-                      }}
-                    </button>
+                    <div class="flex flex-wrap items-center gap-3">
+                      <button
+                        class="rounded-full bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_12px_24px_rgba(15,23,42,0.08)]"
+                        @click="createCourseNote"
+                      >
+                        记录笔记
+                      </button>
+                      <button
+                        v-if="canTrackProgress"
+                        class="rounded-full bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:bg-slate-900 hover:text-white"
+                        @click="markCurrentKnowledgePoint"
+                      >
+                        {{
+                          progress?.completedKnowledgePointIds.includes(selectedKnowledgePoint.id)
+                            ? "标记为未完成"
+                            : "标记为已完成"
+                        }}
+                      </button>
+                    </div>
                   </div>
 
                   <p
@@ -213,7 +236,7 @@ watch(
                 <ul class="mt-4 space-y-3 text-sm leading-7 text-slate-500">
                   <li>左侧章节树支持折叠，适合在全局浏览与专注阅读之间切换。</li>
                   <li>知识点是主要学习单元，整体进度按知识点完成率计算。</li>
-                  <li>资源卡片只聚焦当前章节，避免右侧内容区信息过载。</li>
+                  <li>可以随时从当前知识点跳转去写笔记，把课程理解沉淀成自己的 Markdown 记录。</li>
                 </ul>
               </section>
             </div>

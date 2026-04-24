@@ -51,6 +51,10 @@ class User(IDMixin, TimestampMixin, Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+    notes: Mapped[list["Note"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
 
 class Course(IDMixin, TimestampMixin, Base):
@@ -115,6 +119,7 @@ class Course(IDMixin, TimestampMixin, Base):
         order_by="Chapter.order_index",
     )
     enrollments: Mapped[list["Enrollment"]] = relationship(back_populates="course")
+    notes: Mapped[list["Note"]] = relationship(back_populates="course")
 
 
 class CourseVersion(IDMixin, Base):
@@ -282,3 +287,31 @@ class KnowledgePointProgress(IDMixin, TimestampMixin, Base):
 
     enrollment: Mapped["Enrollment"] = relationship(back_populates="knowledge_point_progress")
     knowledge_point: Mapped["KnowledgePoint"] = relationship(back_populates="progress_records")
+
+
+class Note(IDMixin, TimestampMixin, Base):
+    __tablename__ = "notes"
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    course_id: Mapped[int | None] = mapped_column(
+        ForeignKey("courses.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    title: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        default="Untitled Note",
+        server_default="Untitled Note",
+    )
+    content: Mapped[str] = mapped_column(
+        Text(),
+        nullable=False,
+        default="",
+        server_default="",
+    )
+
+    user: Mapped["User"] = relationship(back_populates="notes")
+    course: Mapped["Course | None"] = relationship(back_populates="notes")

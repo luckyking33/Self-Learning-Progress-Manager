@@ -3,11 +3,12 @@ import { createRouter, createWebHistory } from "vue-router";
 import MainLayout from "@/layouts/MainLayout.vue";
 import { pinia } from "@/stores";
 import { useUserStore } from "@/stores/user";
-import CourseDetailView from "@/views/course/CourseDetailView.vue";
 import LoginView from "@/views/auth/LoginView.vue";
 import RegisterView from "@/views/auth/RegisterView.vue";
-import LearningDashboardView from "@/views/placeholders/LearningDashboardView.vue";
+import CourseDetailView from "@/views/course/CourseDetailView.vue";
+import NotesWorkspaceView from "@/views/notes/NotesWorkspaceView.vue";
 import CourseSquareView from "@/views/placeholders/CourseSquareView.vue";
+import LearningDashboardView from "@/views/placeholders/LearningDashboardView.vue";
 import SettingsView from "@/views/placeholders/SettingsView.vue";
 
 const router = createRouter({
@@ -46,6 +47,14 @@ const router = createRouter({
           path: "learning",
           name: "learning-dashboard",
           component: LearningDashboardView,
+          meta: {
+            requiresAuth: true,
+          },
+        },
+        {
+          path: "notes",
+          name: "notes-workspace",
+          component: NotesWorkspaceView,
           meta: {
             requiresAuth: true,
           },

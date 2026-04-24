@@ -29,7 +29,9 @@ client.interceptors.response.use(
       clearAccessToken();
       const currentPath = `${window.location.pathname}${window.location.search}`;
       const needsRedirect =
-        currentPath.startsWith("/learning") || currentPath.startsWith("/settings");
+        currentPath.startsWith("/learning") ||
+        currentPath.startsWith("/settings") ||
+        currentPath.startsWith("/notes");
 
       if (
         needsRedirect &&

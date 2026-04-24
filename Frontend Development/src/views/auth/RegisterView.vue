@@ -149,10 +149,10 @@ async function submit() {
           <div class="relative">
             <p class="text-sm uppercase tracking-[0.3em] text-slate-400">Start clean</p>
             <h2 class="mt-5 text-5xl font-semibold tracking-tight text-slate-950">
-              把课程、分叉和进度放进同一个工作区。
+              把课程、分叉、笔记和进度放进同一个工作区。
             </h2>
             <p class="mt-6 max-w-md text-base leading-8 text-slate-500">
-              注册后你可以收藏课程、记录知识点进度，并在 STAR 里逐步建立自己的课程仓库。
+              注册后你可以收藏课程、记录知识点进度，并在 STAR 里逐步建立自己的课程仓库与学习笔记系统。
             </p>
 
             <div class="mt-12 space-y-4">
@@ -170,11 +170,11 @@ async function submit() {
               <div class="rounded-[28px] bg-white px-6 py-5 shadow-[0_16px_40px_rgba(15,23,42,0.06)]">
                 <div class="flex items-center gap-3">
                   <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-900 text-white">
-                    <AppIcon name="sparkles" class="h-4 w-4" />
+                    <AppIcon name="note" class="h-4 w-4" />
                   </div>
                   <div>
-                    <p class="text-sm font-semibold text-slate-900">学习进度</p>
-                    <p class="mt-1 text-sm text-slate-500">自动保存报名状态和上次学习位置。</p>
+                    <p class="text-sm font-semibold text-slate-900">学习笔记</p>
+                    <p class="mt-1 text-sm text-slate-500">用 Markdown 记录理解、提纲和复盘。</p>
                   </div>
                 </div>
               </div>

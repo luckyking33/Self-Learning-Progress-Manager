@@ -8,7 +8,17 @@ from decimal import Decimal
 from sqlalchemy import text
 
 from app.core.security import get_password_hash
-from app.db.models import Chapter, Course, CourseVersion, Enrollment, KnowledgePoint, KnowledgePointProgress, Resource, User
+from app.db.models import (
+    Chapter,
+    Course,
+    CourseVersion,
+    Enrollment,
+    KnowledgePoint,
+    KnowledgePointProgress,
+    Note,
+    Resource,
+    User,
+)
 from app.db.session import AsyncSessionLocal
 
 
@@ -18,6 +28,7 @@ async def reset_database() -> None:
             text(
                 """
                 TRUNCATE TABLE
+                    notes,
                     knowledge_point_progress,
                     enrollments,
                     resources,
@@ -208,7 +219,7 @@ async def seed() -> None:
                             },
                             {
                                 "title": "Alembic 迁移习惯",
-                                "description": "维护数据库结构演进而不是在启动时建表。",
+                                "description": "维护数据库结构演进，而不是在启动时建表。",
                             },
                         ],
                         "resources": [
@@ -344,10 +355,7 @@ async def seed() -> None:
         session.add_all(versions)
         await session.flush()
 
-        course_version_by_course_id = {
-            version.course_id: version
-            for version in versions
-        }
+        course_version_by_course_id = {version.course_id: version for version in versions}
 
         vue_course = courses[0]
         fastapi_course = courses[1]
@@ -404,6 +412,29 @@ async def seed() -> None:
                     enrollment_id=enrollment3.id,
                     knowledge_point_id=courses[2].chapters[0].knowledge_points[1].id,
                     is_completed=True,
+                ),
+            ]
+        )
+
+        session.add_all(
+            [
+                Note(
+                    user_id=user1.id,
+                    course_id=vue_course.id,
+                    title="组合式 API 速记",
+                    content="# 组合式 API\n\n- `setup()` 是逻辑入口\n- 响应式状态拆到 composables 更稳\n- 需要多练习状态与路由协作",
+                ),
+                Note(
+                    user_id=user1.id,
+                    course_id=fastapi_course.id,
+                    title="FastAPI 路由习惯",
+                    content="# 路由习惯\n\n1. 路由层做输入输出\n2. Service 负责业务聚合\n3. Session 生命周期交给依赖管理",
+                ),
+                Note(
+                    user_id=user2.id,
+                    course_id=courses[2].id,
+                    title="408 错题回看",
+                    content="## 今天要复盘\n\n- 树的遍历顺序\n- 进程同步经典题\n- CPU cache 层次关系",
                 ),
             ]
         )

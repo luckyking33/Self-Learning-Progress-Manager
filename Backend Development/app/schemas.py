@@ -1,4 +1,4 @@
-"""Pydantic schemas for STAR CRUD, auth, and frontend-facing API responses."""
+"""Pydantic schemas for STAR CRUD, auth, notes, and frontend-facing API responses."""
 
 from __future__ import annotations
 
@@ -246,3 +246,25 @@ class AuthTokenOut(BaseModel):
 class TokenPayload(BaseModel):
     sub: str
     exp: int
+
+
+class NoteCreateIn(InputSchema):
+    course_id: int | None = Field(default=None, gt=0)
+    title: str = Field(default="Untitled Note", min_length=1, max_length=255)
+    content: str = Field(default="", max_length=100_000)
+
+
+class NoteUpdateIn(InputSchema):
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    content: str | None = Field(default=None, max_length=100_000)
+    course_id: int | None = Field(default=None, gt=0)
+
+
+class NoteOut(BaseModel):
+    id: int
+    courseId: int | None
+    courseTitle: str | None
+    title: str
+    content: str
+    createdAt: datetime
+    updatedAt: datetime

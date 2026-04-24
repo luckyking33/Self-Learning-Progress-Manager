@@ -9,7 +9,7 @@ type NavItem = {
   name: string;
   to: string;
   label: string;
-  iconName: "course" | "folder" | "settings";
+  iconName: "course" | "folder" | "note" | "settings";
   exact?: boolean;
 };
 
@@ -29,6 +29,13 @@ const navItems: NavItem[] = [
     to: "/learning",
     label: "我的学习",
     iconName: "folder",
+    exact: true,
+  },
+  {
+    name: "notes",
+    to: "/notes",
+    label: "我的笔记",
+    iconName: "note",
     exact: true,
   },
   {
@@ -119,13 +126,13 @@ onMounted(async () => {
         </nav>
       </div>
 
-      <div class="mt-5 flex items-center justify-between gap-2 lg:hidden">
+      <div class="mt-5 grid grid-cols-2 gap-2 lg:hidden">
         <RouterLink
           v-for="item in navItems"
           :key="item.name"
           :to="item.to"
           :class="[
-            'flex flex-1 items-center justify-center gap-2 rounded-2xl px-3 py-3 text-xs font-medium transition-all duration-300',
+            'flex items-center justify-center gap-2 rounded-2xl px-3 py-3 text-xs font-medium transition-all duration-300',
             isActive(item)
               ? 'bg-white text-slate-950 shadow-[0_12px_24px_rgba(15,23,42,0.08)]'
               : 'bg-transparent text-slate-500 hover:bg-white/70 hover:text-slate-900',
@@ -137,7 +144,7 @@ onMounted(async () => {
       </div>
     </aside>
 
-    <div class="px-4 pb-6 pt-[224px] lg:pl-[296px] lg:pr-6 lg:pt-6">
+    <div class="px-4 pb-6 pt-[268px] lg:pl-[296px] lg:pr-6 lg:pt-6">
       <div class="mx-auto max-w-[1480px]">
         <header class="mb-5 flex items-center justify-between gap-4 px-1">
           <div>
